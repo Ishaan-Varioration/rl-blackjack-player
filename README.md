@@ -25,6 +25,33 @@ Dealer bust probability by upcard:
 |---|---|---|---|---|---|---|---|---|---|---|
 | Bust % | 20.1 | 35.7 | 37.7 | 39.7 | 41.8 | 43.9 | 26.2 | 24.5 | 22.8 | 23.0 |
 
+## The Model
+`src/model.py` turns the game into an MDP. Both algorithms solve this same model, so any difference in their results comes from the algorithms and not from the game.
+
+- **State:** `(player_sum, soft, upcard)`. `soft` means an ace is counted as 11. There are 280 states: hard 4-21 and soft 12-21, against each of the 10 upcards
+- **Actions:** `STAND` and `HIT`. A total of 21 can only stand
+- **Discount:** gamma = 1, since every hand ends
+- **Naturals:** settled on the deal, before any decision, so they are not part of the table
+
+`build_model()` returns one table:
+
+```
+P[state][action] = [(probability, next_state, reward), ...]
+```
+
+- **Stand** ends the hand. It always has three outcomes: win (+1), push (0) and lose (-1), with probabilities from the dealer model
+- **Hit** draws one card. It leads to a new state with reward 0, or to a bust with reward -1
+
+Example, hard 16 against a dealer 10:
+
+| Action | Outcome | Probability | Reward |
+|---|---|---|---|
+| Stand | Win (dealer busts) | 0.230 | +1 |
+| Stand | Push | 0.000 | 0 |
+| Stand | Lose | 0.770 | -1 |
+| Hit | Hard 17, 18, 19, 20 or 21 | 0.077 each | 0 |
+| Hit | Bust | 0.615 | -1 |
+
 ## Setup
 Requires Python 3.11. Create a virtual environment once, after cloning:
 ```bash
@@ -38,5 +65,6 @@ Run `source .venv/bin/activate` again in each new terminal. The `.venv/` folder 
 With the venv active:
 ```bash
 python -m src.dealer   # print the dealer outcome table
+python -m src.model    # print example rows of the model
 pytest                 # run tests
 ```
