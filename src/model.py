@@ -4,10 +4,11 @@ from .rules import CARD_PROBS, DEFAULT_RULES
 STAND = 0
 HIT = 1
 TERMINAL = "terminal"  # hand over, value 0
-GAMMA = 1.0
+GAMMA = 1.0 #discount factor is 1
 
 
-def all_states():  # all 280 (player_sum, soft, upcard) states
+def all_states():  
+    #this function returns all possible states in the blackjack game, which are represented as tuples of (total, soft, upcard)
     states = []
     for upcard in range(1, 11):
         for total in range(4, 22):       # hard 4..21
@@ -17,7 +18,7 @@ def all_states():  # all 280 (player_sum, soft, upcard) states
     return states
 
 
-STATES = all_states()
+STATES = all_states() # list of all possible states in the blackjack game
 
 
 def stand_outcomes(state, rules=DEFAULT_RULES):  # win, push, lose
