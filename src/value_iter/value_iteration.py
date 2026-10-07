@@ -7,10 +7,35 @@ def q_value (state, action, V, P): # expected return of taking action in state, 
         q += prob * (reward + GAMMA * V[next_state]) 
     return q # q = expected value of taking action in state 
 
-P=build_model()
+def sweep(V,P): #goes through all states and updates the value function based on the expected return of taking the best action in each state
 
-V={state: 0.0 for state in STATES}  # initial value function
-V[TERMINAL] = 0.0  # terminal state has value 0
+    delta = 0.0 
+    for state in STATES:
+        v = V[state] 
+        V[state] = max(q_value(state, action, V, P) for action in P[state]) # update V[STATE] to max q value possible from that state
+        delta = max(delta, abs(v - V[state]))
+    return delta #ends up being the maximum change in value function across all states
 
-print(q_value((20, False, 6), STAND, V, P))    # expect about  0.678
-print(q_value((16, False, 10), HIT, V, P))     # expect about -0.615
+# a large delta value means estimates are still being corrected 
+# a small delta value means estimates are converging to the true value function
+
+
+def solve(P, theta=1e-9): # sweeps until the value function converges
+    #theta = 10^-9
+
+    V = {state: 0.0 for state in STATES}  # initial value function
+    V[TERMINAL] = 0.0  # terminal state has value 0
+
+    deltas = []  # delta from each sweep, for the convergence plot
+    while True:
+        delta = sweep(V, P)
+        deltas.append(delta)
+        if delta < theta:  # nothing changed by more than theta, so we have converged
+            break
+
+    policy = {}  # best action in each state
+    for state in STATES:
+        policy[state] = max(P[state], key=lambda action: q_value(state, action, V, P))
+
+    return V, policy, deltas
+
