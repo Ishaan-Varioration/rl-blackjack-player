@@ -52,6 +52,61 @@ Example, hard 16 against a dealer 10:
 | Hit | Hard 17, 18, 19, 20 or 21 | 0.077 each | 0 |
 | Hit | Bust | 0.615 | -1 |
 
+## Value Iteration
+`src/value_iter/value_iteration.py` finds the optimal policy from the model. It keeps a table `V` with one number per state, the expected return from that state, and improves it until it stops changing.
+
+The update for each state is the Bellman optimality equation:
+
+```
+V(s) = max over actions a of   sum of  p * (r + gamma * V(s'))
+```
+
+It is built from three functions:
+- `q_value(state, action, V, P)`: the expected return of one action in one state. It looks one step ahead and uses the current `V` for everything after
+- `sweep(V, P)`: goes through all 280 states once, sets each state's value to the `q_value` of its best action, and returns `delta`, the largest change it made
+- `solve(P, theta)`: starts `V` at zero and sweeps until `delta < theta`. It then reads off the policy: the action with the largest `q_value` in each state. Ties go to `STAND`
+
+`solve` returns `V`, `policy` and `stats` (the delta from each sweep, the number of sweeps, the number of state updates and the time taken).
+
+### Convergence
+With `theta = 1e-9` it converges in 10 sweeps, which is 2,800 state updates.
+
+| Sweep | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| delta | 0.963 | 0.352 | 0.105 | 0.040 | 0.0055 | 0.00056 | 0.000037 | 0.0000015 |
+
+Once it has converged, more sweeps change nothing: the values are optimal for this model.
+
+### The optimal policy
+H = hit, S = stand. Rows are the player's total, columns are the dealer's upcard.
+
+```
+HARD      2  3  4  5  6  7  8  9  10  A
+ 4-11     H  H  H  H  H  H  H  H  H   H
+ 12       H  H  S  S  S  H  H  H  H   H
+ 13-16    S  S  S  S  S  H  H  H  H   H
+ 17-21    S  S  S  S  S  S  S  S  S   S
+
+SOFT      2  3  4  5  6  7  8  9  10  A
+ 12-17    H  H  H  H  H  H  H  H  H   H
+ 18       S  S  S  S  S  S  S  H  H   H
+ 19-21    S  S  S  S  S  S  S  S  S   S
+```
+
+This matches the standard basic strategy chart for hit and stand.
+
+### Checking it by simulation
+`src/simulate.py` deals real cards and plays full hands with a given policy, including naturals and the dealer peek. It does not use the model, so it is an independent check. Results over 1,000,000 hands per policy (each average is accurate to about +/- 0.001):
+
+| Policy | Avg return per hand | Win | Push | Lose |
+|---|---|---|---|---|
+| Value iteration | -0.0275 | 43.1% | 8.7% | 48.1% |
+| Mimic dealer (stand on 17+) | -0.0632 | 40.8% | 9.8% | 49.4% |
+| Never bust (stand on 12+) | -0.0793 | 41.7% | 6.3% | 51.9% |
+| Always stand | -0.1573 | 38.6% | 4.8% | 56.6% |
+
+The expected return predicted from `V` is -0.0264 per hand, which the simulation agrees with. The return is still negative because, with only hit and stand, the house keeps an edge even against perfect play.
+
 ## Setup
 Requires Python 3.11. Create a virtual environment once, after cloning:
 ```bash
@@ -64,7 +119,10 @@ Run `source .venv/bin/activate` again in each new terminal. The `.venv/` folder 
 ## Running
 With the venv active:
 ```bash
-python -m src.dealer   # print the dealer outcome table
-python -m src.model    # print example rows of the model
-pytest                 # run tests
+python -m src.dealer            # print the dealer outcome table
+python -m src.model             # print example rows of the model
+python -m src.value_iter.value_iteration   # run value iteration
+python -m src.simulate          # simulate 1,000,000 hands per policy
+python -m src.simulate 50000    # same, with a chosen number of hands
+pytest                          # run tests
 ```
