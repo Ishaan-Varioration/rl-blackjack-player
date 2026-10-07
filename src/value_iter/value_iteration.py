@@ -48,10 +48,27 @@ def solve(P, theta=1e-9): # sweeps until the value function converges
     return V, policy, stats
 
 
+def print_table(V, policy): # prints the value of every state, with h after it where the policy hits
+
+    upcards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 1]  # ace last
+    for soft in (False, True):
+        totals = range(21, 11, -1) if soft else range(21, 3, -1)  # soft 21..12, hard 21..4
+        print("SOFT" if soft else "HARD", "".join(f"{'A' if up == 1 else up:>8}" for up in upcards))
+        for total in totals:
+            row = f"{total:>4} "
+            for up in upcards:
+                state = (total, soft, up)
+                row += f"{V[state]:>+7.3f}" + ("h" if policy[state] == HIT else " ")
+            print(row)
+        print()
+
+
 if __name__ == "__main__":
     V, policy, stats = solve(build_model())
     print(stats["sweeps"], "sweeps")
     print(stats["updates"], "updates")
     print(round(stats["time"], 4), "seconds")
+    print()
+    print_table(V, policy)
 
 

@@ -95,6 +95,50 @@ SOFT      2  3  4  5  6  7  8  9  10  A
 
 This matches the standard basic strategy chart for hit and stand.
 
+### The value table
+This is the converged `V`. Each number is the expected return per hand, on a bet of 1, from that state when playing optimally. An `h` after a number means the best action is to hit, and no letter means stand. Rows are the player's total, columns are the dealer's upcard, and the `10` column covers all 10-valued cards.
+
+```
+HARD        2       3       4       5       6       7       8       9      10       A
+  21  +0.880  +0.884  +0.887  +0.891  +0.894  +0.926  +0.931  +0.939  +0.963  +0.904
+  20  +0.635  +0.646  +0.657  +0.668  +0.678  +0.773  +0.792  +0.758  +0.555  +0.602
+  19  +0.378  +0.397  +0.416  +0.436  +0.453  +0.616  +0.594  +0.288  +0.063  +0.188
+  18  +0.110  +0.138  +0.166  +0.195  +0.223  +0.400  +0.106  -0.183  -0.178  -0.226
+  17  -0.156  -0.120  -0.083  -0.046  -0.006  -0.107  -0.382  -0.423  -0.420  -0.516
+  16  -0.287  -0.247  -0.206  -0.165  -0.121  -0.415h -0.458h -0.509h -0.540h -0.542h
+  15  -0.287  -0.247  -0.206  -0.165  -0.121  -0.370h -0.417h -0.472h -0.504h -0.507h
+  14  -0.287  -0.247  -0.206  -0.165  -0.121  -0.321h -0.372h -0.431h -0.466h -0.469h
+  13  -0.287  -0.247  -0.206  -0.165  -0.121  -0.269h -0.324h -0.387h -0.425h -0.428h
+  12  -0.254h -0.234h -0.206  -0.165  -0.121  -0.213h -0.272h -0.340h -0.381h -0.384h
+  11  +0.238h +0.260h +0.283h +0.307h +0.332h +0.292h +0.230h +0.158h +0.119h +0.103h
+  10  +0.181h +0.205h +0.230h +0.256h +0.282h +0.257h +0.198h +0.117h +0.025h +0.033h
+   9  +0.072h +0.099h +0.128h +0.157h +0.187h +0.172h +0.098h -0.052h -0.153h -0.124h
+   8  -0.025h +0.006h +0.037h +0.070h +0.104h +0.082h -0.060h -0.210h -0.249h -0.263h
+   7  -0.110h -0.077h -0.043h -0.007h +0.030h -0.069h -0.211h -0.285h -0.319h -0.349h
+   6  -0.138h -0.105h -0.070h -0.034h +0.005h -0.152h -0.217h -0.293h -0.338h -0.341h
+   5  -0.126h -0.093h -0.059h -0.023h +0.015h -0.119h -0.188h -0.267h -0.313h -0.316h
+   4  -0.113h -0.081h -0.047h -0.011h +0.026h -0.088h -0.159h -0.241h -0.289h -0.292h
+
+SOFT        2       3       4       5       6       7       8       9      10       A
+  21  +0.880  +0.884  +0.887  +0.891  +0.894  +0.926  +0.931  +0.939  +0.963  +0.904
+  20  +0.635  +0.646  +0.657  +0.668  +0.678  +0.773  +0.792  +0.758  +0.555  +0.602
+  19  +0.378  +0.397  +0.416  +0.436  +0.453  +0.616  +0.594  +0.288  +0.063  +0.188
+  18  +0.110  +0.138  +0.166  +0.195  +0.223  +0.400  +0.106  -0.101h -0.144h -0.158h
+  17  -0.002h +0.028h +0.059h +0.091h +0.125h +0.054h -0.073h -0.150h -0.197h -0.220h
+  16  -0.020h +0.010h +0.041h +0.074h +0.108h -0.005h -0.067h -0.149h -0.207h -0.203h
+  15  +0.001h +0.030h +0.060h +0.093h +0.126h +0.037h -0.027h -0.112h -0.174h -0.169h
+  14  +0.023h +0.051h +0.081h +0.112h +0.145h +0.080h +0.013h -0.075h -0.139h -0.134h
+  13  +0.047h +0.074h +0.103h +0.134h +0.165h +0.122h +0.054h -0.038h -0.105h -0.099h
+  12  +0.080h +0.102h +0.127h +0.157h +0.187h +0.165h +0.095h +0.000h -0.070h -0.064h
+```
+
+- Hard 13-16 against 2-6 have the same value in each column: the player stands and only wins if the dealer busts, so the exact total does not matter
+- Hard 12-16 lose on average whatever the player does
+- Soft hands are worth more than the same hard total from 12 to 18, because they can be hit without busting
+- Hard and soft 19-21 are identical, since the player stands on both
+
+Print it with `python -m src.value_iter.value_iteration`.
+
 ### Checking it by simulation
 `src/simulate.py` deals real cards and plays full hands with a given policy, including naturals and the dealer peek. It does not use the model, so it is an independent check. Results over 1,000,000 hands per policy (each average is accurate to about +/- 0.001):
 
